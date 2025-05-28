@@ -1,0 +1,17 @@
+1. Thư viện EasyLED, tôi muốn dùng nó để tránh dùng lệnh delay() trong bài code.
+ 
+2. Rồi tôi kết hợp nó trong bài code dùng Timer/Counter 1 (TC1) - normal mode để đếm thời gian sáng đèn. Kết quả thu về như sau:
+	a. Mode đếm số từ 0 -> 0xFFF (65536) trong 4.19s (F_sys = 16MHz, prescale = 1024), đếm xong là 1 lần ngắt tràn. Xong reset về 0 và đếm lại. Nên tôi cần phải tính toán giá trị bắt đầu đếm để VDK đếm được chính xác thời gian mong muốn (15s, 18s, 3s, ...) 
+	b. Hai lệnh led.on(); led.off(); hoạt động tốt trong hàm ISR()
+	c. Lệnh led.flash(); không chạy được trong hàm ISR()	//nháy đèn đi bộ
+	d. Giải pháp, tôi đưa lệnh led.flash() vào void loop(). Kết quả là nháy đèn thành công. Tôi dùng ISR để điều khiền đèn, dùng loop() để điều khiển riêng đèn đi bộ
+
+3. Tôi chuyển sang dùng TC1 - CTC mode
+	a. Tính thời gian đếm số trong 1 giây, lưu giá trị đếm xong vào OCR1A. Tạo ngắt 1 giây với OCR1A. Tức mode so sánh, đếm từ 0 đến OCR1A thì ngắt.
+	b. Dùng counter++ để đếm, ngắt 1 giây rồi đếm tiếp. Nhân số lần ngắt ra được số thời gian đếm được
+	c. Tôi yêu cầu thêm GPT viết lệnh nháy LED khi sử dụng ISR. GPT vẫn sử dụng lệnh digital.Write(x, HIGH) như bình thường. Thay đổi giá trị đếm số trong 0.5s vào OCR1A, lúc ngắt 0.5s này, LED tắt. (ngắt là không thực hiện lệnh digital.Write(x, HIGH) nữa)
+
+4. Tôi hỏi lại GPT, kiểm tra thư viện EasyLED, tại sao tôi không đưa lệnh led.flash() vào hàm ISR được
+	a. GPT trả lời, lệnh led.flash(), tác giả dùng lệnh millis() để cấu hình thời gian nháy đèn, nên tôi không đưa vào hàm ISR được, bắt buộc phải đưa vào hàm void loop()
+
+5. Vấn đề còn lại: áp dụng code mẫu của GPT để vận hành được hệ thống của tôi, với nhiều yêu cầu phức tạp hơn.
